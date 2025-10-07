@@ -1,3 +1,5 @@
+# src/main/resources/application.yml
+
 server:
   port: 8080
   error:
@@ -10,8 +12,10 @@ server:
 
 spring:
   profiles:
-    # پروفایل پیش‌فرض (برای dev) را خودت انتخاب کن. پیشنهاد: dev
     active: prod
+    group:
+      prod: [mysql]
+      dev: [mysql]   # اگر می‌خواهی dev هم با MySQL بالا بیاید
   jpa:
     open-in-view: false            # بهترین پرکتیس
     properties:

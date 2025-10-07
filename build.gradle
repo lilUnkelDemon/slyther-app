@@ -29,7 +29,8 @@ dependencies {
 
 	// Relational DBs
 //	runtimeOnly 'com.mysql:mysql-connector-j'
-	implementation 'org.mariadb.jdbc:mariadb-java-client:3.4.1' // یا نسخه 3.x جدیدتر
+//	implementation 'org.mariadb.jdbc:mariadb-java-client:3.4.1' // یا نسخه 3.x جدیدتر
+	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'   // اگر MariaDB/MySQL داری
 
 	runtimeOnly 'org.postgresql:postgresql'
 	implementation 'org.flywaydb:flyway-core'
