@@ -1,0 +1,29 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    clean-disabled: true
+    locations: classpath:db/migration
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: WARN
+    ir.momeni.slyther: INFO
+    org.springdoc: WARN
+    io.swagger.v3: WARN
+
+# Swagger/OpenAPI را در پروڈاکشن غیرفعال نگه دار
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+

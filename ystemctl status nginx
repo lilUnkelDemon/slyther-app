@@ -1,0 +1,15 @@
+[0;1;32m●[0m apache2.service - The Apache HTTP Server
+     Loaded: loaded (]8;;file://nirwana/usr/lib/systemd/system/apache2.service\/usr/lib/systemd/system/apache2.service]8;;\; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
+     Active: [0;1;32mactive (running)[0m since Thu 2025-09-18 22:38:34 +0330; 12h ago
+ Invocation: be8d296333ef498987ef1298636fbdf9
+       Docs: ]8;;https://httpd.apache.org/docs/2.4/\https://httpd.apache.org/docs/2.4/]8;;\
+    Process: 19864 ExecStart=/usr/sbin/apachectl start (code=exited, status=0/SUCCESS)
+   Main PID: 19869 (apache2)
+      Tasks: 85[0;38;5;245m (limit: 18648)[0m
+     Memory: 206.3M (peak: 207.6M)
+        CPU: 14.545s
+     CGroup: /system.slice/apache2.service
+             ├─[0;38;5;245m19869 /usr/sbin/apache2 -k start[0m
+             ├─[0;38;5;245m19871 /usr/sbin/apache2 -k start[0m
+             ├─[0;38;5;245m19872 /usr/sbin/apache2 -k start[0m
+             └─[0;38;5;245m19873 /usr/sbin/apache2 -k start[0m

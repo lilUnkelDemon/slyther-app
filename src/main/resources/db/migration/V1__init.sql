@@ -1,0 +1,71 @@
+-- ROLES
+CREATE TABLE IF NOT EXISTS roles (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  createdAt DATETIME(6) NULL,
+  updatedAt DATETIME(6) NULL,
+  name VARCHAR(64) NOT NULL UNIQUE
+) ENGINE=InnoDB;
+
+-- USERS
+CREATE TABLE IF NOT EXISTS users (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  createdAt DATETIME(6) NULL,
+  updatedAt DATETIME(6) NULL,
+  username VARCHAR(150) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  enabled TINYINT(1) NOT NULL
+) ENGINE=InnoDB;
+
+-- USER_ROLES
+CREATE TABLE IF NOT EXISTS user_roles (
+  user_id BIGINT NOT NULL,
+  role_id BIGINT NOT NULL,
+  PRIMARY KEY (user_id, role_id),
+  CONSTRAINT fk_ur_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_ur_role FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- SESSIONS (RefreshToken hashed)
+CREATE TABLE IF NOT EXISTS sessions (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  createdAt DATETIME(6) NULL,
+  updatedAt DATETIME(6) NULL,
+  user_id BIGINT NOT NULL,
+  refreshTokenHash VARCHAR(64) NOT NULL UNIQUE,
+  expiresAt DATETIME(6) NOT NULL,
+  userAgent VARCHAR(255) NULL,
+  ipAddress VARCHAR(46) NULL,
+  revoked TINYINT(1) NOT NULL,
+  INDEX idx_session_user (user_id),
+  CONSTRAINT fk_sess_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ACTION LOGS
+CREATE TABLE IF NOT EXISTS action_logs (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  createdAt DATETIME(6) NULL,
+  updatedAt DATETIME(6) NULL,
+  username VARCHAR(150) NULL,
+  method VARCHAR(16) NOT NULL,
+  path VARCHAR(255) NOT NULL,
+  ip VARCHAR(46) NULL,
+  userAgent VARCHAR(255) NULL,
+  status INT NOT NULL,
+  success TINYINT(1) NOT NULL,
+  errorMessage VARCHAR(512) NULL,
+  INDEX idx_log_path (path),
+  INDEX idx_log_username (username)
+) ENGINE=InnoDB;
+
+-- PASSWORD RESET TOKENS (hashed)
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  createdAt DATETIME(6) NULL,
+  updatedAt DATETIME(6) NULL,
+  user_id BIGINT NOT NULL,
+  tokenHash VARCHAR(64) NOT NULL UNIQUE,
+  expiresAt DATETIME(6) NOT NULL,
+  used TINYINT(1) NOT NULL,
+  INDEX idx_prt_user (user_id),
+  CONSTRAINT fk_prt_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;

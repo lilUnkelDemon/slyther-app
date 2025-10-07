@@ -1,0 +1,28 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: DEBUG
+    ir.momeni.slyther: DEBUG
+
+server:
+  error:
+    include-message: ALWAYS
+    include-stacktrace: ALWAYS
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+  packages-to-scan:
+    - ir.momeni.slyther.auth.controller
+    - ir.momeni.slyther.user.controller
+    - ir.momeni.slyther.test.controller
+  paths-to-match:
+    - /api/**

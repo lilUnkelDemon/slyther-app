@@ -1,0 +1,27 @@
+# src/main/resources/application-mysql.yml
+spring:
+  config:
+    activate:
+      on-profile: mysql
+
+  datasource:
+    url: jdbc:mariadb://127.0.0.1:3306/slyther_db
+    username: ${DB_USER:root}
+    password: ${DB_PASS:}
+    driver-class-name: org.mariadb.jdbc.Driver   # اختیاری؛ با URL هم تشخیص می‌دهد
+    hikari:
+      maximum-pool-size: 15
+      minimum-idle: 5
+      idle-timeout: 600000
+      connection-timeout: 30000
+      max-lifetime: 1700000
+      keepalive-time: 300000
+
+  jpa:
+    properties:
+      # کلاس درست در Hibernate 6:
+      hibernate.dialect: org.hibernate.dialect.MariaDBDialect
+    hibernate:
+      ddl-auto: update   # dev
+
+# اگر قبلاً جایی hibernate.dialect = MariaDB103Dialect گذاشتی، حذف/تصحیحش کن
