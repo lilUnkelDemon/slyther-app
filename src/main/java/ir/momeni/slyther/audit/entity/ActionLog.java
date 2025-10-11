@@ -34,4 +34,7 @@ public class ActionLog extends BaseEntity {
 
     @Column(length = 512)
     private String errorMessage;
+
+    @Column(length = 512)
+    private String msg;
 }

@@ -11,7 +11,9 @@ import org.springframework.stereotype.Service;
 public class SessionService {
     private final SessionRepository repo;
 
-    public Session create(Session s) { return repo.save(s); }
+    public void create(Session s) {
+        repo.save(s);
+    }
 
     public Session validateActiveRawToken(String rawRefreshToken) {
         String hash = HashUtils.sha256Hex(rawRefreshToken);

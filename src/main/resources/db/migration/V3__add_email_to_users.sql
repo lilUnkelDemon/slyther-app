@@ -1,0 +1,29 @@
+
+SET @sql := (
+  SELECT IF(
+    NOT EXISTS(
+      SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'users'
+        AND COLUMN_NAME = 'email'
+    ),
+    'ALTER TABLE users ADD COLUMN email VARCHAR(255) NOT NULL',
+    'SELECT 1'
+  )
+);
+PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+
+SET @sql := (
+  SELECT IF(
+    NOT EXISTS(
+      SELECT 1 FROM INFORMATION_SCHEMA.STATISTICS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'users'
+        AND INDEX_NAME = 'idx_users_email'
+    ),
+    'ALTER TABLE users ADD UNIQUE KEY idx_users_email (email)',
+    'SELECT 1'
+  )
+);
+PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;

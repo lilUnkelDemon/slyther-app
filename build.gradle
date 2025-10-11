@@ -1,25 +1,36 @@
+buildscript {
+	repositories { mavenCentral() }
+	dependencies {
+//		classpath 'org.flywaydb:flyway-mysql:11.7.2'
+		classpath 'org.mariadb.jdbc:mariadb-java-client:3.5.5'
+	}
+}
+
 plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.5'
 	id 'io.spring.dependency-management' version '1.1.6'
-}
-
-group = 'ir.momeni'
-version = '0.0.2'
-
-java {
-	toolchain { languageVersion = JavaLanguageVersion.of(17) }
+//	id 'org.flywaydb.flyway' version '11.7.2'
 }
 
 repositories { mavenCentral() }
 
+group = 'ir.momeni'
+version = '0.0.2'
+
+java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
+
+/** ⬅️ برای کلاس‌پسِ تسک‌های Flyway یک کانفیگ جدا بساز */
+configurations {
+	flywayMigration
+}
+
 dependencies {
+	// --- اپ ---
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
-
-	// Swagger / OpenAPI
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
 
 	// JWT
@@ -27,15 +38,14 @@ dependencies {
 	runtimeOnly   'io.jsonwebtoken:jjwt-impl:0.11.5'
 	runtimeOnly   'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
-	// Relational DBs
-//	runtimeOnly 'com.mysql:mysql-connector-j'
-//	implementation 'org.mariadb.jdbc:mariadb-java-client:3.4.1' // یا نسخه 3.x جدیدتر
-	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'   // اگر MariaDB/MySQL داری
-
+	// DB ران‌تایم اپ
+	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
 	runtimeOnly 'org.postgresql:postgresql'
+
+	// Flyway برای خود اپ (اتومات اسپرینگ)
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-mysql'
-	implementation 'org.flywaydb:flyway-database-postgresql' // (برای Flyway PG)
+	implementation 'org.flywaydb:flyway-database-postgresql'
 
 	// MongoDB
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
@@ -43,13 +53,23 @@ dependencies {
 	// Lombok
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
-
-	// Optional
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+	// --- ⬅️ کلاس‌پسِ «تسک‌های Flyway» (مهم) ---
+	flywayMigration 'org.flywaydb:flyway-mysql:11.7.2'                 // پلاگین DB
+	flywayMigration 'org.mariadb.jdbc:mariadb-java-client:3.5.5'       // درایور JDBC (یا mysql-connector-j)
 }
 
+//flyway {
+//	// اگر scheme mariadb اذیت کرد، mysql بذار (یکی‌ش جواب می‌ده)
+//	url = 'jdbc:mysql://127.0.0.1:3306/slyther_db'   // یا: jdbc:mariadb://...
+//	user = 'root'
+//	password = ''
+//	schemas = ['slyther_db']
+//	locations = ['classpath:db/migration']
+//	driver = 'org.mariadb.jdbc.Driver'               // با هر دو scheme کار می‌کند
+//}
 
 tasks.test { useJUnitPlatform() }

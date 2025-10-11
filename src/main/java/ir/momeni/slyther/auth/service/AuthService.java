@@ -9,8 +9,12 @@ import ir.momeni.slyther.session.entity.Session;
 import ir.momeni.slyther.session.service.SessionService;
 import ir.momeni.slyther.user.entity.User;
 import ir.momeni.slyther.user.repository.UserRepository;
+import ir.momeni.slyther.audit.service.ActionLogService;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.*;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -29,12 +33,15 @@ public class AuthService {
     private final PasswordEncoder encoder;
     private final SessionService sessionService;
     private final AppProperties props;
+    private final ActionLogService logService;
 
     private static final Pattern STRONG_PWD = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$");
 
-    public String register(RegisterRequest req) {
+    public Map<String, String> register(RegisterRequest req) {
         if (userRepo.existsByUsername(req.getUsername()))
             throw new IllegalArgumentException("Username already exists");
+        if (userRepo.existsByEmail(req.getEmail()))
+            throw new IllegalArgumentException("Email already exists");
         if (!STRONG_PWD.matcher(req.getPassword()).matches())
             throw new IllegalArgumentException("Password too weak");
 
@@ -43,57 +50,82 @@ public class AuthService {
 
         User u = User.builder()
                 .username(req.getUsername())
+                .email(req.getEmail())
                 .password(encoder.encode(req.getPassword()))
                 .roles(Set.of(roleUser))
                 .enabled(true)
                 .build();
         userRepo.save(u);
-        return "User created";
+
+        // لاگ دستی
+        logService.info("User registered", "/api/auth/register", req.getUsername(), null);
+
+        return Map.of("success","true","msg","user created");
     }
 
     public TokenResponse login(LoginRequest req, String userAgent, String ip) {
-        Authentication auth = authManager.authenticate(
-                new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword()));
+        // لاگ تلاش لاگین
+        logService.info("Login attempt", "/api/auth/login", req.getUsername(), ip);
 
-        User u = (User) auth.getPrincipal();
+        try {
+            Authentication auth = authManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword()));
 
-        Map<String, Object> claims = Map.of("roles",
-                u.getAuthorities().stream().map(Object::toString).toList());
+            User u = (User) auth.getPrincipal();
 
-        String access = jwtService.generateAccessToken(u.getUsername(), claims);
+            Map<String, Object> claims = Map.of("roles",
+                    u.getAuthorities().stream().map(Object::toString).toList());
 
-        String refresh = UUID.randomUUID().toString() + "-" + UUID.randomUUID();
-        Instant exp = Instant.now().plusSeconds(props.getSecurity().getJwt().getRefreshExpDays() * 86400L);
+            String access = jwtService.generateAccessToken(u.getUsername(), claims);
 
-        sessionService.create(Session.builder()
-                .user(u)
-                .refreshTokenHash(ir.momeni.slyther.common.util.HashUtils.sha256Hex(refresh))
-                .expiresAt(exp)
-                .userAgent(userAgent)
-                .ipAddress(ip)
-                .build());
+            // تولید رفرش‌توکن و هش
+            String refresh = UUID.randomUUID().toString() + "-" + UUID.randomUUID();
+            String refreshHash = ir.momeni.slyther.common.util.HashUtils.sha256Hex(refresh);
+            if (refreshHash == null || refreshHash.isBlank()) {
+                throw new AuthenticationServiceException("refreshTokenHash is null/blank");
+            }
 
-        return TokenResponse.builder()
-                .tokenType("Bearer")
-                .accessToken(access)
-                .refreshToken(refresh)
-                .expiresInSeconds(props.getSecurity().getJwt().getAccessExpMins() * 60L)
-                .build();
+            Instant exp = Instant.now().plusSeconds(props.getSecurity().getJwt().getRefreshExpDays() * 86400L);
+
+            // ذخیره سشن با هش
+            sessionService.create(Session.builder()
+                    .user(u)
+                    .refreshTokenHash(refreshHash)
+                    .expiresAt(exp)
+                    .userAgent(userAgent)
+                    .ipAddress(ip)
+                    .build());
+
+            // لاگ موفق
+            logService.infoHttp("Login success","POST", 200,"/api/auth/login", u.getUsername(), ip);
+
+            return TokenResponse.builder()
+                    .tokenType("Bearer")
+                    .accessToken(access)
+                    .refreshToken(refresh) // خام برای کلاینت؛ هش در DB
+                    .expiresInSeconds(props.getSecurity().getJwt().getAccessExpMins() * 60L)
+                    .build();
+        } catch (org.springframework.security.core.AuthenticationException ex) {
+            // لاگ خطا
+            logService.errorHttp("Login failed", ex,"POST" ,400,"/api/auth/login", req.getUsername(), ip);
+            throw ex;
+        }
     }
 
     public TokenResponse refresh(RefreshRequest req) {
-        // اعتبارسنجی توکن قبلی
         var oldSession = sessionService.validateActiveRawToken(req.getRefreshToken());
         var u = oldSession.getUser();
 
-        // rotate: revoke قبلی + ساخت جدید
+        // rotate
         sessionService.revokeRawToken(req.getRefreshToken());
 
         String newRefresh = UUID.randomUUID().toString() + "-" + UUID.randomUUID();
+        String newHash = ir.momeni.slyther.common.util.HashUtils.sha256Hex(newRefresh);
         Instant exp = Instant.now().plusSeconds(props.getSecurity().getJwt().getRefreshExpDays() * 86400L);
+
         sessionService.create(Session.builder()
                 .user(u)
-                .refreshTokenHash(ir.momeni.slyther.common.util.HashUtils.sha256Hex(newRefresh))
+                .refreshTokenHash(newHash)
                 .expiresAt(exp)
                 .userAgent(oldSession.getUserAgent())
                 .ipAddress(oldSession.getIpAddress())
@@ -102,15 +134,19 @@ public class AuthService {
         Map<String, Object> claims = Map.of("roles", u.getAuthorities().stream().map(Object::toString).toList());
         String access = jwtService.generateAccessToken(u.getUsername(), claims);
 
+        // لاگ دستی
+        logService.info("Token refreshed", "/api/auth/refresh", u.getUsername(), oldSession.getIpAddress());
+
         return TokenResponse.builder()
                 .tokenType("Bearer")
                 .accessToken(access)
-                .refreshToken(newRefresh) // رفرش جدید
+                .refreshToken(newRefresh)
                 .expiresInSeconds(props.getSecurity().getJwt().getAccessExpMins() * 60L)
                 .build();
     }
 
     public void logout(String refreshToken) {
         sessionService.revokeRawToken(refreshToken);
+        logService.info("Logged out", "/api/auth/logout", null, null);
     }
 }

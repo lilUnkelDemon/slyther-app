@@ -27,6 +27,7 @@ public class DataSeeder {
             if (!userRepo.existsByUsername("user")) {
                 userRepo.save(User.builder()
                         .username("user")
+                                .email("user@email.com")
                         .password(encoder.encode("123456"))
                         .roles(Set.of(rUser))
                         .enabled(true).build());
@@ -34,6 +35,7 @@ public class DataSeeder {
             if (!userRepo.existsByUsername("admin")) {
                 userRepo.save(User.builder()
                         .username("admin")
+                                .email("admin@email.com")
                         .password(encoder.encode("123456"))
                         .roles(Set.of(rAdmin))
                         .enabled(true).build());
@@ -41,6 +43,7 @@ public class DataSeeder {
             if (!userRepo.existsByUsername("sudo")) {
                 userRepo.save(User.builder()
                         .username("sudo")
+                                .email("sudo@email.com")
                         .password(encoder.encode("123456"))
                         .roles(Set.of(rUser, rAdmin, rSudo))
                         .enabled(true).build());

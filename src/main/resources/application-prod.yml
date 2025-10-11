@@ -1,11 +1,15 @@
 # src/main/resources/application-prod.yml
 spring:
-  config:
-    activate:
-      on-profile: prod
   jpa:
     hibernate:
       ddl-auto: validate
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: none
   flyway:
     enabled: true
     baseline-on-migrate: true

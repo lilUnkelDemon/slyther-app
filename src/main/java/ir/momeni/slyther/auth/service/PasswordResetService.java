@@ -7,6 +7,7 @@ import ir.momeni.slyther.auth.repository.PasswordResetTokenRepository;
 import ir.momeni.slyther.common.util.HashUtils;
 import ir.momeni.slyther.user.entity.User;
 import ir.momeni.slyther.user.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,7 +26,7 @@ public class PasswordResetService {
     private static final Pattern STRONG_PWD = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$");
 
     public String forgot(ForgotPasswordRequest req) {
-        User u = userRepo.findByUsername(req.getUsername())
+        User u = userRepo.findByEmail(req.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         String token = UUID.randomUUID().toString() + "-" + UUID.randomUUID();
@@ -38,6 +39,7 @@ public class PasswordResetService {
         return token; // در تولید: ایمیل/SMS
     }
 
+    @Transactional
     public void reset(ResetPasswordRequest req) {
         if (!STRONG_PWD.matcher(req.getNewPassword()).matches()) {
             throw new IllegalArgumentException("Password too weak");
