@@ -2,26 +2,32 @@
 spring:
   config:
     activate:
-      on-profile: mysql
+      on-profile: mysql   # Active when: spring.profiles.active includes "mysql"
 
   datasource:
+
+    # MariaDB connection (preferred for MySQL compatibility)
     url: jdbc:mariadb://127.0.0.1:3306/slyther_db
-    username: ${DB_USER:root}
-    password: ${DB_PASS:}
-    driver-class-name: org.mariadb.jdbc.Driver   # اختیاری؛ با URL هم تشخیص می‌دهد
+
+    # Credentials (loaded from environment whenever possible)
+    username: ${DB_USER:root}     # Default: root (only for local dev)
+    password: ${DB_PASS:}         # Default: empty (only for local dev)
+    driver-class-name: org.mariadb.jdbc.Driver   # Optional: auto-detected by URL
     hikari:
+
+      # Connection pool performance tuning
       maximum-pool-size: 15
       minimum-idle: 5
-      idle-timeout: 600000
-      connection-timeout: 30000
-      max-lifetime: 1700000
-      keepalive-time: 300000
+      idle-timeout: 600000        # 10 min
+      connection-timeout: 30000   # 30 sec max wait for a DB connection
+      max-lifetime: 1700000       # ~28 min: below DB default to avoid stale connections
+      keepalive-time: 300000      # Keep connections alive every 5 min
 
   jpa:
     properties:
-      # کلاس درست در Hibernate 6:
+      # Correct class in Hibernate 6:
       hibernate.dialect: org.hibernate.dialect.MariaDBDialect
     hibernate:
-      ddl-auto: update   # dev
+      ddl-auto: update            # ✅ dev only | NEVER use this for production!
 
-# اگر قبلاً جایی hibernate.dialect = MariaDB103Dialect گذاشتی، حذف/تصحیحش کن
+# If you already have hibernate.dialect = MariaDB103Dialect somewhere, remove/correct it
