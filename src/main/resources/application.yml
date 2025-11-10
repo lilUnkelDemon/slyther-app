@@ -3,8 +3,8 @@
 server:
   port: 8080
   error:
-    include-message: NEVER         # پروڈاکشن: هرگز پیام خطا لو نده
-    include-stacktrace: NEVER
+    include-message: NEVER         # Production: never leak error messages in responses
+    include-stacktrace: NEVER      # Production: never include stack traces in responses
   forward-headers-strategy: framework
   compression:
     enabled: true
@@ -12,12 +12,12 @@ server:
 
 spring:
   profiles:
-    active: prod
+    active: dev
     group:
       prod: [mysql]
-      dev: [mysql]   # اگر می‌خواهی dev هم با MySQL بالا بیاید
+      dev: [mysql]                 # If you want dev to also run with MySQL
   jpa:
-    open-in-view: false            # بهترین پرکتیس
+    open-in-view: false            # Best practice: disable Open Session in View
     properties:
       hibernate.jdbc.time_zone: UTC
 
@@ -25,7 +25,7 @@ app:
   security:
     jwt:
       issuer: slyther
-      # در پروڈاکشن: از ENV بخون: ${JWT_SECRET}
+      # In production: read from ENV: ${JWT_SECRET}
       secret: ${JWT_SECRET:CHANGE_ME_TO_A_LONG_RANDOM_SECRET_VALUE_256bit}
       access-exp-mins: 15
       refresh-exp-days: 14
@@ -37,10 +37,15 @@ app:
         max-requests: 5
         window-seconds: 60
   cors:
-    allowed-origins: [ "http://localhost:3000" ]
+    allowed-origins:
+      - "http://localhost:4200"
+      - "http://localhost:3000"
+      - "https://amir.ir"
     allowed-methods: [ GET, POST, PUT, DELETE, PATCH, OPTIONS ]
 
-# به‌صورت پیش‌فرض مستندات رو خاموش کن؛ در dev روشنش می‌کنیم
+
+
+# Disable docs by default; enable them in dev profile
 springdoc:
   api-docs:
     enabled: false
@@ -55,4 +60,4 @@ management:
   endpoint:
     health:
       probes:
-        enabled: true
+        enabled: true   # Enable readiness/liveness probes
