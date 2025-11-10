@@ -2,7 +2,7 @@
 spring:
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: validate   # ✅ Ensure DB matches entity model
       naming:
         physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
         implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl
@@ -10,6 +10,7 @@ spring:
       hibernate:
         hbm2ddl:
           auto: none
+    show-sql: false       # ✅ Never show SQL in production
   flyway:
     enabled: true
     baseline-on-migrate: true
@@ -24,7 +25,7 @@ logging:
     org.springdoc: WARN
     io.swagger.v3: WARN
 
-# Swagger/OpenAPI را در پروڈاکشن غیرفعال نگه دار
+# ✅ Disable API docs & UI completely in production
 springdoc:
   api-docs:
     enabled: false
