@@ -17,41 +17,67 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Set;
 
+
+/**
+ * Servlet filter that authenticates requests based on a JWT in the Authorization header.
+ * <p>
+ * Behavior:
+ * - Skips certain public/infra paths and CORS preflight (OPTIONS) requests.
+ * - If a Bearer token is present, parses it and loads the corresponding user.
+ * - On success, sets a {@link UsernamePasswordAuthenticationToken} in the {@link SecurityContextHolder}.
+ * - On failure (invalid/expired token), it does not authenticate; protected routes will later return 401.
+ */
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserRepository userRepo;
 
-    // مسیرهایی که نباید وارد فیلتر JWT شوند
+    // Paths that must not go through the JWT filter
     private static final Set<String> SKIP_PREFIXES = Set.of(
             "/api/auth",        // login/register/refresh/forgot-password
             "/v3/api-docs",     // swagger JSON + groups (/v3/api-docs/core)
-            "/swagger-ui",      // UI
+            "/swagger-ui",      // Swagger UI
             "/swagger-ui.html", // UI alias
-            "/actuator"         // health و ...
+            "/actuator"         // health, etc.
     );
 
+
+    /**
+     * Determines whether this request should bypass the filter entirely.
+     * <p>
+     * Skips:
+     * - CORS preflight (OPTIONS)
+     * - Swagger/OpenAPI, actuator, and auth endpoints (as listed in {@link #SKIP_PREFIXES})
+     */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest req) {
         final String path = req.getRequestURI();
         final String method = req.getMethod();
 
-        // preflight اصلاً وارد زنجیره JWT نشود
+        // Do not run the JWT chain for preflight requests
         if (HttpMethod.OPTIONS.matches(method)) return true;
 
-        // swagger/openapi/actuator/auth را کامل اسکیپ کن
+        // Completely skip swagger/openapi/actuator/auth
         for (String pfx : SKIP_PREFIXES) {
             if (path.startsWith(pfx)) return true;
         }
         return false;
     }
 
+
+    /**
+     * Core filtering logic:
+     * - If already authenticated, continue the chain as-is.
+     * - Otherwise, try to extract and validate a Bearer token.
+     * - On valid token: load the user and set authentication in the security context.
+     * - On invalid token: ignore (no auth set), the downstream security layer will handle 401s.
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
             throws ServletException, IOException {
 
-        // اگر از قبل احراز شده‌ایم، کاری نکن
+        // If we are already authenticated, do nothing
         if (SecurityContextHolder.getContext().getAuthentication() != null) {
             chain.doFilter(req, res);
             return;
@@ -69,7 +95,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 });
             } catch (Exception ignored) {
-                // توکن نامعتبر: auth ست نمی‌شود؛ مسیرهای محافظت‌شده بعداً 401 می‌دهند.
+                // Invalid token: auth is not set; protected endpoints will later return 401.
             }
         }
 
