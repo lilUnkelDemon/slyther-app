@@ -2,28 +2,28 @@
 spring:
   config:
     activate:
-      on-profile: dev
+      on-profile: dev   # This file is active only when the "dev" profile is enabled
 
 logging:
   level:
     root: INFO
-    org.springframework.security: DEBUG
-    ir.momeni.slyther: DEBUG
+    org.springframework.security: DEBUG   # Show detailed security logs for debugging
+    ir.momeni.slyther: DEBUG              # Enable debug logs for your application
 
 server:
   error:
-    include-message: ALWAYS
-    include-stacktrace: ALWAYS
+    include-message: ALWAYS        # In dev: show error message in HTTP responses
+    include-stacktrace: ALWAYS     # In dev: show stacktrace for easier debugging
 
 springdoc:
   api-docs:
-    enabled: true
+    enabled: true                  # Enable OpenAPI docs in development
   swagger-ui:
-    enabled: true
-    path: /swagger-ui.html
-  packages-to-scan:
+    enabled: true                  # Enable Swagger UI in development
+    path: /swagger-ui.html         # Custom UI access path
+  packages-to-scan:                # Limit API docs to relevant controllers
     - ir.momeni.slyther.auth.controller
     - ir.momeni.slyther.user.controller
     - ir.momeni.slyther.test.controller
   paths-to-match:
-    - /api/**
+    - /api/**                      # Only document /api endpoints
