@@ -9,10 +9,24 @@ import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+
+/**
+ * OpenAPI/Swagger configuration for API documentation.
+ *
+ * Enables:
+ * ✅ Interactive Swagger UI
+ * ✅ JWT Authentication support
+ * ✅ Grouping controllers into documentation sections
+ */
 @Configuration
 @SecurityScheme(name = "bearerAuth", type = SecuritySchemeType.HTTP, scheme = "bearer", bearerFormat = "JWT")
 public class OpenApiConfig {
 
+    /**
+     * Base OpenAPI metadata shown in the Swagger UI header.
+     *
+     * @return a configured {@link OpenAPI} instance with API title, version, and description
+     */
     @Bean
     public OpenAPI baseOpenAPI() {
         return new OpenAPI().info(new Info()
@@ -21,6 +35,14 @@ public class OpenApiConfig {
                 .description("Authentication & Authorization with JWT"));
     }
 
+
+    /**
+     * Groups core APIs (auth, users, test endpoints) under a single Swagger section.
+     *
+     * Only includes endpoints under `/api/**` and only from specified controller packages.
+     *
+     * @return GroupedOpenApi configuration for "core"
+     */
     @Bean
     public GroupedOpenApi coreGroup() {
         return GroupedOpenApi.builder()
